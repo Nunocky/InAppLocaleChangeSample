@@ -1,9 +1,11 @@
 package com.example.inapplocalechangesample
 
-import android.app.Activity
+import android.content.Context
+import android.content.SharedPreferences
 import android.content.res.Configuration
-import android.content.res.Resources
+import android.os.Build
 import android.os.Bundle
+import android.os.LocaleList
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import java.util.*
@@ -14,25 +16,50 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         findViewById<Button>(R.id.button_en).setOnClickListener {
-            setLocale(this, "en")
+            preference(this)?.edit()?.putString(LANGUAGE, LANG_EN)?.apply()
             finish()
             startActivity(intent)
         }
 
         findViewById<Button>(R.id.button_ja).setOnClickListener {
-            setLocale(this, "ja")
+            preference(this)?.edit()?.putString(LANGUAGE, LANG_JA)?.apply()
             finish()
             startActivity(intent)
         }
     }
 
+    override fun attachBaseContext(newBase: Context?) {
+        // デフォルトはシステムの言語設定に合わせる
+        var locale = newBase?.resources?.configuration?.locales?.get(0)
+        val lang = preference(newBase)?.getString(LANGUAGE, locale?.language)
+
+        locale = when (lang) {
+            LANG_JA -> Locale.JAPANESE
+            else -> Locale.ENGLISH
+        }
+
+        super.attachBaseContext(newBase?.createLocalizedContext(locale))
+    }
+
+    private fun preference(context: Context?): SharedPreferences? =
+        context?.getSharedPreferences(PREF_SETTING, Context.MODE_PRIVATE)
+
+    companion object {
+        private const val PREF_SETTING = "setting"
+        private const val LANGUAGE = "language"
+        private const val LANG_EN = "en"
+        private const val LANG_JA = "ja"
+    }
+
 }
 
-private fun setLocale(activity: Activity, languageCode: String) {
-    val locale = Locale(languageCode)
-    Locale.setDefault(locale)
-    val resources: Resources = activity.resources
-    val config: Configuration = resources.configuration
-    config.setLocale(locale)
-    resources.updateConfiguration(config, resources.displayMetrics)
+private fun Context.createLocalizedContext(locale: Locale): Context {
+    val res = resources
+    val config = Configuration(res.configuration)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        config.setLocales(LocaleList(locale))
+    } else {
+        config.setLocale(locale)
+    }
+    return createConfigurationContext(config)
 }

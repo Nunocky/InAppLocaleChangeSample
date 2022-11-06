@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">InAppLocaleChangeSample</string>
+    <string name="english">英語</string>
+    <string name="japanese">日本語</string>
+    <string name="hello_world">ハローワールド</string>
+</resources>
